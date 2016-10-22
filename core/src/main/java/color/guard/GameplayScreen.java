@@ -4,6 +4,9 @@ import color.guard.rules.PieceKind;
 import color.guard.state.Faction;
 import color.guard.state.GameState;
 import color.guard.state.WorldState;
+import color.guard.utils.Constants;
+import color.guard.utils.ConvertKeyStringToInt;
+import color.guard.utils.GameConfig;
 import com.badlogic.gdx.*;
 import com.badlogic.gdx.graphics.Color;
 import com.badlogic.gdx.graphics.GL20;
@@ -14,6 +17,7 @@ import com.badlogic.gdx.graphics.g2d.BitmapFont;
 import com.badlogic.gdx.graphics.g2d.SpriteBatch;
 import com.badlogic.gdx.graphics.g2d.TextureAtlas;
 import com.badlogic.gdx.graphics.glutils.ShaderProgram;
+import com.badlogic.gdx.math.MathUtils;
 import com.badlogic.gdx.math.Vector3;
 import com.badlogic.gdx.utils.GdxRuntimeException;
 import com.badlogic.gdx.utils.ObjectSet;
@@ -55,8 +59,10 @@ public class GameplayScreen implements Screen {
     private InputMultiplexer input;
     private InputProcessor proc;
     private Vector3 tempVector3;
-    public GameplayScreen(GameState state)
-    {
+    private GameConfig gameConfig;
+    private Constants constants;
+
+    public GameplayScreen(GameState state) {
         this.state = state;
         map = state.world.worldMap;
         mapWidth = map.length;
@@ -83,11 +89,12 @@ public class GameplayScreen implements Screen {
         String s;
         terrains = new TextureAtlas.AtlasRegion[WorldState.terrains.size() * 4];
         for (int i = 0; i < terrains.length >> 2; i++) {
-            terrains[i * 4]     = atlas.findRegion("terrains/" + WorldState.terrains.getAt(i) + "_Huge_face0_Normal", 0);
+            terrains[i * 4] = atlas.findRegion("terrains/" + WorldState.terrains.getAt(i) + "_Huge_face0_Normal", 0);
             terrains[i * 4 + 1] = atlas.findRegion("terrains/" + WorldState.terrains.getAt(i) + "_Huge_face1_Normal", 0);
             terrains[i * 4 + 2] = atlas.findRegion("terrains/" + WorldState.terrains.getAt(i) + "_Huge_face2_Normal", 0);
             terrains[i * 4 + 3] = atlas.findRegion("terrains/" + WorldState.terrains.getAt(i) + "_Huge_face3_Normal", 0);
-        };
+        }
+        ;
         int pieceCount = PieceKind.kinds.size(), facilityCount = PieceKind.facilities.size();
         PieceKind p;
         for (int i = 0; i < pieceCount; i++) {
@@ -100,7 +107,7 @@ public class GameplayScreen implements Screen {
                     new Animation(0.09f, atlas.createSprites(s + 3), Animation.PlayMode.LOOP)
             });
             s = "animation_frames/" + p.visual + "/" + p.visual + "_Large_face";
-            if((p.weapons & 2) != 0) {
+            if ((p.weapons & 2) != 0) {
                 acting0.put(p.name, new Animation[]{
                         new Animation(0.09f, atlas.createSprites(s + 0 + "_attack_0")),
                         new Animation(0.09f, atlas.createSprites(s + 1 + "_attack_0")),
@@ -108,8 +115,7 @@ public class GameplayScreen implements Screen {
                         new Animation(0.09f, atlas.createSprites(s + 3 + "_attack_0"))
                 });
             }
-            if((p.weapons & 1) != 0)
-            {
+            if ((p.weapons & 1) != 0) {
                 acting1.put(p.name, new Animation[]{
                         new Animation(0.09f, atlas.createSprites(s + 0 + "_attack_1")),
                         new Animation(0.09f, atlas.createSprites(s + 1 + "_attack_1")),
@@ -146,11 +152,10 @@ public class GameplayScreen implements Screen {
         for (int x = mapWidth - 1; x >= 0; x--) {
             CELL_WISE:
             for (int y = mapHeight - 1; y >= 0; y--) {
-                if(guiRandom.next(4) == 0) {
+                if (guiRandom.next(4) == 0) {
                     guiRandom.randomOrdering(pieceCount, tempOrdering);
                     for (int i = 0; i < pieceCount; i++) {
-                        if(PieceKind.kinds.getAt(tempOrdering[i]).mobilities[map[x][y]] < 6)
-                        {
+                        if (PieceKind.kinds.getAt(tempOrdering[i]).mobilities[map[x][y]] < 6) {
                             pieces[x][y] = tempOrdering[i] << 2 | guiRandom.next(2);
                             continue CELL_WISE;
                         }
@@ -220,7 +225,7 @@ public class GameplayScreen implements Screen {
             }
         }
         batch = new SpriteBatch();
-        proc = new InputAdapter(){
+        proc = new InputAdapter() {
             @Override
             public boolean touchUp(int screenX, int screenY, int pointer, int button) {
                 tempVector3.set(screenX, screenY, 0);
@@ -228,15 +233,38 @@ public class GameplayScreen implements Screen {
                 viewport.getCamera().position.set(tempVector3);
                 return true;
             }
+
+            @Override
+            public boolean keyDown(int keycode) {
+                OrthographicCamera came = (OrthographicCamera) viewport.getCamera();
+                if (gameConfig != null) {
+                    if (keycode == ConvertKeyStringToInt.convert(constants.ZoomInKey)) {
+                        came.zoom += Gdx.graphics.getDeltaTime() * constants.defaultZoomSpeed;
+                    }
+                    if (keycode == ConvertKeyStringToInt.convert(constants.ZoomOutKey)) {
+                        came.zoom -= Gdx.graphics.getDeltaTime() * constants.defaultZoomSpeed;
+                    }
+
+                    came.zoom = MathUtils.clamp(came.zoom, constants.CameraMinZoomLimit, constants.CameraMaxZoomLimit);
+                    viewport.getCamera().update();
+                }
+                return true;
+
+            }
         };
         Gdx.input.setInputProcessor(proc);
+        gameConfig = new GameConfig();
+        gameConfig.getJsonObject();
+        gameConfig.readJsonConfigurationFile();
+        //read config file for changes
+        constants = gameConfig.readJsonConfigurationFile();
     }
 
     @Override
     public void render(float delta) {
         currentTime += delta;
 
-        displayString = state.world.mapGen.atlas.getAt(((int)currentTime >>> 2) % 24 + 2);
+        displayString = state.world.mapGen.atlas.getAt(((int) currentTime >>> 2) % 24 + 2);
         Gdx.gl.glClearColor(0.45F, 0.7F, 1f, 1f);
         Gdx.gl.glClear(GL20.GL_COLOR_BUFFER_BIT);
         viewport.apply(false);
@@ -265,7 +293,7 @@ public class GameplayScreen implements Screen {
         TextureAtlas.AtlasSprite sprite;
         for (int x = mapWidth - 1; x >= 0; x--) {
             for (int y = mapHeight - 1; y >= 0; y--) {
-                if((currentPiece = pieces[x][y]) >= 0) {
+                if ((currentPiece = pieces[x][y]) >= 0) {
                     faction = Faction.whoOwns(x, y, guiRandom, state.world.factions);
                     currentPalette.r = faction.palettes[guiRandom.nextIntHasty(faction.palettes.length)] / 255f;
                     sprite = (TextureAtlas.AtlasSprite) standing.getAt(currentPiece >>> 2)[currentPiece & 3].getKeyFrame(currentTime, true);
