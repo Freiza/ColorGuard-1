@@ -87,14 +87,13 @@ public class WorldState {
                 tempRegion.clear();
                 tempRegion.insertSeveral(tempCon.randomPortion(worldRandom, continentSize / worldRandom.between(16, 20)));
                 tempRegion.spill(tempCon, tempRegion.size() + continentSize / worldRandom.between(3, 6), worldRandom).expand8way().retract(2);
-                if(worldRandom.next(3) > 4)
-                {
+                if (worldRandom.next(3) > 4) {
                     starter = tempRegion.first();
-                    if(Math.abs(starter.x + starter.y - wmax) < tropicLimit && worldRandom.next(3) < 5)
+                    if (Math.abs(starter.x + starter.y - wmax) < tropicLimit && worldRandom.next(3) < 5)
                         worldMap = tempRegion.writeInts(worldMap, 2);
                     else
                         worldMap = tempRegion.writeInts(worldMap, 7);
-                }else
+                } else
                     worldMap = tempRegion.writeInts(worldMap, 2);
                 tempRegion.clear();
                 tempRegion.insertSeveral(tempCon.randomPortion(worldRandom, continentSize / worldRandom.between(20, 25)));
@@ -108,11 +107,11 @@ public class WorldState {
         for (int i = 0; i < cc; i++) {
             tempCon = continents.get(i);
             continentSize = tempCon.size();
-            if(continentSize < 9) {
+            if (continentSize < 9) {
                 if (worldRandom.next(4) < 11) {
                     water.andNot(tempCon);
                     land.or(tempCon);
-                    if(worldRandom.next(3) > 4)
+                    if (worldRandom.next(3) > 4)
                         worldMap = tempCon.writeInts(worldMap, 7);
                     else
                         worldMap = tempCon.writeInts(worldMap, 2);
@@ -127,7 +126,7 @@ public class WorldState {
                     worldMap = tempCon.not().fringe8way().writeInts(worldMap, 1);
                     //tempCon.not().mask(politicalMap, glyph);
 
-                    if(worldRandom.next(3) > 4)
+                    if (worldRandom.next(3) > 4)
                         worldMap = tempCon.removeSeveral(tempCon.randomPortion(worldRandom, tempCon.size() >>> 1)).writeInts(worldMap, 7);
                     else
                         worldMap = tempCon.removeSeveral(tempCon.randomPortion(worldRandom, tempCon.size() >>> 1)).writeInts(worldMap, 2);
@@ -138,11 +137,10 @@ public class WorldState {
             for (int y = 1; y < worldHeight - 1; y++) {
                 if ((worldMap[x][y] < 4 || worldMap[x][y] == 7) && Math.abs(x + y - wmax) > polarLimit)
                     worldMap[x][y] = 8;
-                else if(worldMap[x][y] == 10 && Math.abs(x + y - wmax) > polarLimit && worldRandom.next(5) < 3) {
+                else if (worldMap[x][y] == 10 && Math.abs(x + y - wmax) > polarLimit && worldRandom.next(5) < 3) {
                     worldMap[x][y] = 8;
                     politicalMap[x][y] = '%';
-                }
-                else if (worldMap[x][y] == 2 && Math.abs(x + y - wmax) < tropicLimit)
+                } else if (worldMap[x][y] == 2 && Math.abs(x + y - wmax) < tropicLimit)
                     worldMap[x][y] = 3;
             }
         }

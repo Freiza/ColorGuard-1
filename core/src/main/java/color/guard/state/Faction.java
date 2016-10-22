@@ -7,7 +7,7 @@ import squidpony.squidmath.*;
  * A faction in the game world; stores territory, a spoken language, the positions of the
  * capital and cities, some visual info for palettes, and the relationships this Faction has
  * with the other 23 Factions (currently there are 24, hard-coded).
- *
+ * <p>
  * Created by Tommy Ettinger on 10/3/2016.
  */
 public class Faction {
@@ -114,11 +114,10 @@ public class Faction {
 
     public StatefulRNG rng;
 
-    public Faction()
-    {
+    public Faction() {
     }
-    public Faction(int index, String name, FakeLanguageGen language, GreasedRegion territory)
-    {
+
+    public Faction(int index, String name, FakeLanguageGen language, GreasedRegion territory) {
         rng = new StatefulRNG(CrossHash.Lightning.hash64(name));
         this.index = index;
         this.name = name;
@@ -131,15 +130,13 @@ public class Faction {
         for (int p = 0; p < 8; p++) {
             if (p == paint) {
                 attitudes[p] = 0;
-                attitudes[p+8] = 0;
-                attitudes[p+16] = 0;
-            }
-            else
-            {
+                attitudes[p + 8] = 0;
+                attitudes[p + 16] = 0;
+            } else {
                 int mod = aggression + rng.nextIntHasty(114);
                 attitudes[p] = mod + rng.next(4);
-                attitudes[p+8] = mod + rng.next(4);
-                attitudes[p+16] = mod + rng.next(4);
+                attitudes[p + 8] = mod + rng.next(4);
+                attitudes[p + 16] = mod + rng.next(4);
             }
         }
         int skinIndex = rng.nextIntHasty(diversity.length);
@@ -147,20 +144,16 @@ public class Faction {
         for (int i = 0; i < palettes.length; i++) {
             palettes[i] = 8 * diversity[skinIndex][i] + paint;
         }
-        if(territory.isEmpty())
-        {
+        if (territory.isEmpty()) {
             capital = Coord.get(-1, -1);
             cities = new Coord[0];
-        }
-        else {
+        } else {
             GreasedRegion[] retractions = territory.retractSeries(4);
             for (int i = 3; i >= -1; i--) {
                 if (i == -1) {
                     capital = territory.singleRandom(rng);
-                }
-                else
-                {
-                    if(retractions[i].isEmpty())
+                } else {
+                    if (retractions[i].isEmpty())
                         continue;
                     capital = retractions[i].singleRandom(rng);
                     break;
@@ -168,14 +161,14 @@ public class Faction {
             }
             cities = new Coord[8];
             for (int i = 0; i < 8; i++) {
-                cities[i] = Coord.get(-1,-1);
+                cities[i] = Coord.get(-1, -1);
             }
         }
     }
-    public static Faction whoOwns(int x, int y, RNG random, Faction[] factions)
-    {
+
+    public static Faction whoOwns(int x, int y, RNG random, Faction[] factions) {
         for (int i = 0; i < factions.length; i++) {
-            if(factions[i].territory.contains(x, y))
+            if (factions[i].territory.contains(x, y))
                 return factions[i];
         }
         return factions[random.nextIntHasty(factions.length)];

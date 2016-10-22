@@ -9,11 +9,11 @@ import squidpony.squidmath.StatefulRNG;
 public class GameState {
     public StatefulRNG masterRandom;
     public WorldState world;
-    public GameState()
-    {
+
+    public GameState() {
     }
-    public GameState(long seed)
-    {
+
+    public GameState(long seed) {
         masterRandom = new StatefulRNG(seed);
         world = new WorldState(128, 128, masterRandom.nextLong());
     }
